@@ -33,6 +33,19 @@ def update_customer(customer_id, new_customer_name, new_address, new_contact_num
     mydb.commit()
 
 def delete_customer(customer_id):
+    # Check if there are related meters for the customer
+    mycursor.execute("SELECT * FROM Meter WHERE customer_id = %s", (customer_id,))
+    related_meters = mycursor.fetchall()
+
+    if related_meters:
+        # Delete related readings for each meter
+        for meter in related_meters:
+            mycursor.execute("DELETE FROM Reading WHERE meter_id = %s", (meter[0],))
+
+        # Delete the meters
+        mycursor.execute("DELETE FROM Meter WHERE customer_id = %s", (customer_id,))
+    
+    # Delete the customer
     sql = "DELETE FROM Customer WHERE customer_id = %s"
     val = (customer_id,)
     mycursor.execute(sql, val)
@@ -63,10 +76,19 @@ def delete_meter(meter_id):
 
 # CRUD Operations for Readings
 def create_reading(meter_id, reading_date, units_consumed):
-    sql = "INSERT INTO Reading (meter_id, reading_date, units_consumed) VALUES (%s, %s, %s)"
-    val = (meter_id, reading_date, units_consumed)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    # Check if the meter_id exists in the Meter table
+    mycursor.execute("SELECT * FROM Meter WHERE meter_id = %s", (meter_id,))
+    meter = mycursor.fetchone()
+
+    if meter is not None:
+        # Meter exists, proceed with creating the reading
+        sql = "INSERT INTO Reading (meter_id, reading_date, units_consumed) VALUES (%s, %s, %s)"
+        val = (meter_id, reading_date, units_consumed)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        st.write("Reading created successfully!")
+    else:
+        st.write(f"Error: Meter with ID {meter_id} does not exist.")
 
 def read_readings():
     mycursor.execute("SELECT * FROM Reading")
@@ -190,7 +212,6 @@ if options == "Create Reading":
 
     if st.button("Create"):
         create_reading(meter_id, reading_date, units_consumed)
-        st.write("Reading created successfully!")
 
 if options == "Read Readings":
     st.subheader("Read Readings")
