@@ -116,9 +116,17 @@ def logout_user():
     st.session_state.flag = 0  # Reset flag in st.session_state
 
 st.title("Electricity Billing Management System")
-options = st.sidebar.selectbox("Select an Operation", ("Register", "Login", "Create Customer", "Read Customers", "Update Customer", "Delete Customer",
-                                                      "Create Meter", "Read Meters", "Update Meter", "Delete Meter",
-                                                      "Create Reading", "Read Readings", "Logout"))
+
+# Display only "Register" and "Login" options if not logged in
+if st.session_state.flag == 0:
+    options = st.sidebar.selectbox("Select an Operation", ("Register", "Login"))
+else:
+    # Display all options after successful login
+    options = st.sidebar.selectbox("Select an Operation", (
+        "Create Customer", "Read Customers", "Update Customer", "Delete Customer",
+        "Create Meter", "Read Meters", "Update Meter", "Delete Meter",
+        "Create Reading", "Read Readings", "Logout"
+    ))
 
 # CRUD Operations for Customers
 if options == "Create Customer":
@@ -250,4 +258,5 @@ if options == "Logout":
     logout_user()
     st.write("You have been logged out")
 
+# Close the database connection
 mydb.close()
